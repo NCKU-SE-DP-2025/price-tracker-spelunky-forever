@@ -1,10 +1,21 @@
 <template>
     <nav class="navbar">
-        <div class="title"> <RouterLink to="/overview">價格追蹤小幫手</RouterLink></div>
-        <ul class="options">
+        <div class="bur_bp">
+            <div class="title"> <RouterLink to="/overview">價格追蹤小幫手</RouterLink></div>
+            <div class="burger">
+                <p class="line"></p>
+                <p class="line"></p>
+                <p class="line"></p>
+            </div>
+        </div>
+        <ul>
+            <p class="strip"></p>
             <li><RouterLink to="/overview">物價概覽</RouterLink></li>
+            <p class="strip"></p>
             <li><RouterLink to="/trending">物價趨勢</RouterLink></li>
+            <p class="strip"></p>
             <li><RouterLink to="/news">相關新聞</RouterLink></li>
+            <p class="strip"></p>
             <li v-if="!isLoggedIn"><RouterLink to="/login">登入</RouterLink></li>
             <li v-else @click="logout">Hi, {{getUserName}}! 登出</li>
         </ul>
@@ -36,6 +47,22 @@ export default {
 </script>
 
 <style scoped>
+
+.burger {
+    display: none;            
+}
+
+.burger .line{
+    padding: 2px 10px;
+    border: none;
+    background-color: black;
+    margin: 1.5px
+}
+
+.strip{
+    display: none;
+}
+
 .navbar {
     display: flex;
     justify-content: space-between;
@@ -54,6 +81,7 @@ export default {
 }
 
 .title > a{
+    display: flex;
     font-size: 1.4em;
     font-weight: bold;
     color: #2c3e50 !important;
@@ -73,6 +101,52 @@ export default {
 .navbar a {
     text-decoration: none;
     color: #575B5D;
+}
+
+@media (max-width: 768px) {
+    .burger {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .bur_bp {
+        display: flex;
+        align-items: center;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .bp {
+        display: flex;
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+    .navbar ul {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .strip {
+        display: flex;
+        height:1.5px ;
+        background-color:#ddd;
+        width: calc(100% + 40px);
+    }
+
+    .navbar {
+        flex-direction: column;
+        align-items: stretch;
+        box-shadow: none;
+    }
+
+    .strip{
+        display: flex;
+        height:1.5px ;
+        background-color:#ddd;
+        width: calc(100% + 40px);
+    }
+
 }
 
 </style>
