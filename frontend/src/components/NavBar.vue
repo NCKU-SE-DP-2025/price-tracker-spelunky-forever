@@ -2,21 +2,21 @@
     <nav class="navbar">
         <div class="bur_bp">
             <div class="title"> <RouterLink to="/overview">價格追蹤小幫手</RouterLink></div>
-            <div class="burger">
+            <div class="burger" :class="{ open: isOpen }" @click="toggle" tabindex="0" @keydown.enter.prevent="toggle">
                 <p class="line"></p>
                 <p class="line"></p>
                 <p class="line"></p>
             </div>
         </div>
-        <ul>
-            <p class="strip"></p>
-            <li><RouterLink to="/overview">物價概覽</RouterLink></li>
-            <p class="strip"></p>
-            <li><RouterLink to="/trending">物價趨勢</RouterLink></li>
-            <p class="strip"></p>
-            <li><RouterLink to="/news">相關新聞</RouterLink></li>
-            <p class="strip"></p>
-            <li v-if="!isLoggedIn"><RouterLink to="/login">登入</RouterLink></li>
+        <ul ref="nav" :class="{ open: isOpen }">
+            <li class="strip"></li>
+            <li><RouterLink to="/overview" @click="close">物價概覽</RouterLink></li>
+            <li class="strip"></li>
+            <li><RouterLink to="/trending" @click="close">物價趨勢</RouterLink></li>
+            <li class="strip"></li>
+            <li><RouterLink to="/news" @click="close">相關新聞</RouterLink></li>
+            <li class="strip"></li>
+            <li v-if="!isLoggedIn"><RouterLink to="/login" @click="close">登入</RouterLink></li>
             <li v-else @click="logout">Hi, {{getUserName}}! 登出</li>
         </ul>
     </nav>
@@ -35,14 +35,41 @@ export default {
         getUserName(){
             const userStore = useAuthStore();
             return userStore.getUserName;
-        }
+        },
     },
     methods: {
         logout(){
             const userStore = useAuthStore();
             userStore.logout();
+            this.close();
+        },
+        toggle() {
+            this.isOpen = !this.isOpen
+        },
+        close() {
+        this.isOpen = false
+        },
+        onClickOutside(e) {
+            const navEl = this.$refs.nav
+            if (!navEl) return
+            const clickedInsideNav = navEl.contains(e.target)
+            const clickedBurger = e.target.closest && e.target.closest('.burger')
+            if (this.isOpen && !clickedInsideNav && !clickedBurger) {
+            this.isOpen = false
+            }
         }
-    }
+    },
+    data() {
+        return {
+        isOpen: false
+        }
+    },
+    mounted() {
+        document.addEventListener('click', this.onClickOutside)
+    },
+    beforeUnmount() {
+        document.removeEventListener('click', this.onClickOutside)
+    },
 };
 </script>
 
@@ -125,7 +152,23 @@ export default {
     .navbar ul {
         flex-direction: column;
         align-items: center;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.75s ease;
+        position: absolute;    /* 從文檔 flow 拿掉，避免覆蓋整頁內容 */
+        top: 100%;             /* 放在 navbar 底下 */
+        left: 0;
+        right: 0;
+        background-color: #f3f3f3;   /* 給背景，避免內容透過看見下層 */
+        box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+        pointer-events: none;  /* 預設不接收指標事件（closed 狀態）*/
+        z-index: 9;            /* 在 navbar 下，但可視需要調整 */
     }
+
+    .navbar ul.open {
+        max-height: 500px; /* 根據選單長度調整 */
+        pointer-events: auto;  /* 開啟時才可以點擊 ul 內的項目 */
+    }   
 
     .strip {
         display: flex;
@@ -137,7 +180,11 @@ export default {
     .navbar {
         flex-direction: column;
         align-items: stretch;
-        box-shadow: none;
+        box-shadow: 0 0 5px #000000;
+        padding: 10px 20px;
+        justify-content: center;
+        /*position: relative; 
+        z-index: 10;*/
     }
 
     .strip{

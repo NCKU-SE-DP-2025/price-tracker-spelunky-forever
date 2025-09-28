@@ -115,4 +115,11 @@ export default {
     box-sizing: border-box;
     padding: 1em;
 }
+
+@media (max-width: 768px) {
+    .wrapper {
+        padding: 20px 5em;
+    }
+}
+
 </style>
