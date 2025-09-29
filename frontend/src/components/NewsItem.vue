@@ -19,76 +19,51 @@
             <i class="bi bi-fire" :class="{'fire-upvoted': news.is_upvoted}"></i>
             <span>{{ news.upvotes }}</span>
         </div>
-
     </div>
 </template>
 
-<script>
-import { ref, computed } from 'vue';
-import { useAuthStore } from '@/stores/auth';
-import { useNewsStore } from '@/stores/news';
+<script setup>
+import { ref, computed } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import { useNewsStore } from '@/stores/news'
 
-export default {
-  props: {
-    news: {
-      type: Object,
-      required: true
-    }
-  },
-  emits: ['show-dialog', 'fetch-summary'],
-  setup(props, { emit }) {
-    // internal loading guard (keeps behavior similar to original Options API)
-    const isLoading = ref(false);
-
-    // computed: hasDetails
-    const hasDetails = computed(() => {
-      return props.news.reason && props.news.summary;
-    });
-
-    // computed: shortContent
-    const shortContent = computed(() => {
-      return props.news.content && props.news.content.length > 200
-        ? props.news.content.substr(0, 200) + '...'
-        : props.news.content;
-    });
-
-    // computed: isLoggedIn via auth store
-    const auth = useAuthStore();
-    const isLoggedIn = computed(() => auth.isLoggedIn);
-
-    // emit show dialog
-    function showDialog() {
-      emit('show-dialog');
-    }
-
-    // fetch summary - preserve original behavior:
-    // - guard with component-local isLoading to avoid double emit
-    // - emit 'fetch-summary' for parent to handle actual fetching and set news.isSummaryLoading
-    function fetchSummary() {
-      if (isLoading.value) return;
-      isLoading.value = true;
-      emit('fetch-summary');
-      // note: parent / store should toggle news.isSummaryLoading and eventually update news
-      // We don't reset isLoading here because original Options API set this.isLoading = true and did not unset it.
-      // If desired, parent can control and we can reset via an event or prop change (not modifying here to keep behavior).
-    }
-
-    // toggle upvote via news store
-    function toggleUpvote(newsId) {
-      useNewsStore().toggleUpvote(newsId);
-    }
-
-    // return the things used by template
-    return {
-      hasDetails,
-      shortContent,
-      isLoggedIn,
-      showDialog,
-      fetchSummary,
-      toggleUpvote
-    };
+const props = defineProps({
+  news: {
+    type: Object,
+    required: true
   }
-};
+})
+
+const emit = defineEmits(['show-dialog', 'fetch-summary'])
+
+const isLoading = ref(false)
+
+const hasDetails = computed(() => {
+  return props.news.reason && props.news.summary
+})
+
+const shortContent = computed(() => {
+  return props.news.content && props.news.content.length > 200
+    ? props.news.content.substr(0, 200) + '...'
+    : props.news.content
+})
+
+const auth = useAuthStore()
+const isLoggedIn = computed(() => auth.isLoggedIn)
+
+function showDialog() {
+  emit('show-dialog')
+}
+
+function fetchSummary() {
+  if (isLoading.value) return
+  isLoading.value = true
+  emit('fetch-summary')
+}
+
+function toggleUpvote(newsId) {
+  useNewsStore().toggleUpvote(newsId)
+}
 </script>
 
 <style scoped>

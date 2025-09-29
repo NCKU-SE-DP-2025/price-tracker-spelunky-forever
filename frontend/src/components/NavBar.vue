@@ -22,59 +22,52 @@
     </nav>
 </template>
 
-<script>
-import { useAuthStore } from '@/stores/auth';
+<script setup>
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 
-export default {
-    name: 'NavBar',
-    computed: {
-        isLoggedIn(){
-            const userStore = useAuthStore();
-            return userStore.isLoggedIn;
-        },
-        getUserName(){
-            const userStore = useAuthStore();
-            return userStore.getUserName;
-        },
-    },
-    methods: {
-        logout(){
-            const userStore = useAuthStore();
-            userStore.logout();
-            this.close();
-        },
-        toggle() {
-            this.isOpen = !this.isOpen
-        },
-        close() {
-        this.isOpen = false
-        },
-        onClickOutside(e) {
-            const navEl = this.$refs.nav
-            if (!navEl) return
-            const clickedInsideNav = navEl.contains(e.target)
-            const clickedBurger = e.target.closest && e.target.closest('.burger')
-            if (this.isOpen && !clickedInsideNav && !clickedBurger) {
-            this.isOpen = false
-            }
-        }
-    },
-    data() {
-        return {
-        isOpen: false
-        }
-    },
-    mounted() {
-        document.addEventListener('click', this.onClickOutside)
-    },
-    beforeUnmount() {
-        document.removeEventListener('click', this.onClickOutside)
-    },
-};
+const nav = ref(null)
+const isOpen = ref(false)
+
+const userStore = useAuthStore()
+
+const isLoggedIn = computed(() => userStore.isLoggedIn)
+const getUserName = computed(() => userStore.getUserName)
+
+function toggle() {
+  isOpen.value = !isOpen.value
+}
+
+function close() {
+  isOpen.value = false
+}
+
+function logout() {
+  userStore.logout()
+  close()
+}
+
+function onClickOutside(e) {
+  const navEl = nav.value
+  if (!navEl) return
+  const clickedInsideNav = navEl.contains(e.target)
+  const clickedBurger = e.target.closest && e.target.closest('.burger')
+  if (isOpen.value && !clickedInsideNav && !clickedBurger) {
+    isOpen.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', onClickOutside)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onClickOutside)
+})
 </script>
 
 <style scoped>
-
+/* 原本的 style 完全保留 */
 .burger {
     display: none;            
 }
@@ -155,19 +148,19 @@ export default {
         max-height: 0;
         overflow: hidden;
         transition: max-height 0.75s ease;
-        position: absolute;    /* 從文檔 flow 拿掉，避免覆蓋整頁內容 */
-        top: 100%;             /* 放在 navbar 底下 */
+        position: absolute;
+        top: 100%;
         left: 0;
         right: 0;
-        background-color: #f3f3f3;   /* 給背景，避免內容透過看見下層 */
+        background-color: #f3f3f3;
         box-shadow: 0 6px 18px rgba(0,0,0,0.06);
-        pointer-events: none;  /* 預設不接收指標事件（closed 狀態）*/
-        z-index: 9;            /* 在 navbar 下，但可視需要調整 */
+        pointer-events: none;
+        z-index: 9;
     }
 
     .navbar ul.open {
-        max-height: 500px; /* 根據選單長度調整 */
-        pointer-events: auto;  /* 開啟時才可以點擊 ul 內的項目 */
+        max-height: 500px;
+        pointer-events: auto;
     }   
 
     .strip {
@@ -183,8 +176,6 @@ export default {
         box-shadow: 0 0 5px #000000;
         padding: 10px 20px;
         justify-content: center;
-        /*position: relative; 
-        z-index: 10;*/
     }
 
     .strip{
@@ -195,5 +186,4 @@ export default {
     }
 
 }
-
 </style>

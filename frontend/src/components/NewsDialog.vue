@@ -8,46 +8,35 @@
                 <p>原文連結：<a :href="news.url" target="_blank">{{news.url}}</a></p>
                 <p v-for="paragraph, index in formattedContent" :key="index">{{ paragraph }}</p>
             </div>
-
         </div>
     </div>
 </template>
 
-<script>
-import { computed } from 'vue';
+<script setup>
+import { computed } from 'vue'
 
-export default {
-  props: {
-    news: {
-      type: Object,
-      required: true
-    },
-    visible: {
-      type: Boolean,
-      default: false
-    }
+const props = defineProps({
+  news: {
+    type: Object,
+    required: true
   },
-  emits: ['update:visible'],
-  setup(props, { emit }) {
-    // 與原本 Options API 行為一致：如果沒有 content，回傳空字串 ''
-    const formattedContent = computed(() => {
-      if (!props.news || !props.news.content) return '';
-      return props.news.content.split('\r\n');
-    });
-
-    function close() {
-      emit('update:visible', false);
-    }
-
-    // 注意：不要把 props 名稱 (news, visible) 再回傳，template 可以直接讀 props
-    return {
-      formattedContent,
-      close
-    };
+  visible: {
+    type: Boolean,
+    default: false
   }
-};
-</script>
+})
 
+const emit = defineEmits(['update:visible'])
+
+const formattedContent = computed(() => {
+  if (!props.news || !props.news.content) return ''
+  return props.news.content.split('\r\n')
+})
+
+function close() {
+  emit('update:visible', false)
+}
+</script>
 
 <style scoped>
 .news-dialog {
