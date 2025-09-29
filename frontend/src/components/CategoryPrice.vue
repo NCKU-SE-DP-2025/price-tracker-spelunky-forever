@@ -3,22 +3,24 @@
     <h2>{{ categoryName }}</h2>
     <div v-if="isLoading">Loading...</div>
     <div v-if="errorMessage" class="error">{{ errorMessage }}</div>
-    <table v-if="!isLoading && !errorMessage">
-      <thead>
-        <tr>
-          <th>商品名稱</th>
-          <th>規格</th>
-          <th>{{ latestDataTime }} 最新價格</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="data in priceData" :key="data.編號">
-          <td>{{ data.產品名稱 }}</td>
-          <td>{{ data.規格 }}</td>
-          <td>{{ latestPrice(data.統計值) }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="table-wrap">
+      <table v-if="!isLoading && !errorMessage">
+        <thead>
+          <tr>
+            <th>商品名稱</th>
+            <th>規格</th>
+            <th>{{ latestDataTime }} 最新價格</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="data in priceData" :key="data.編號">
+            <td>{{ data.產品名稱 }}</td>
+            <td>{{ data.規格 }}</td>
+            <td>{{ latestPrice(data.統計值) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
@@ -93,5 +95,16 @@ h2{
   background-color: white;
   border-radius: 1em;
   padding: 2em;
+}
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* iOS 平滑滑動 */
+}
+
+.table-wrap table {
+  min-width: 1200px; /* 可依實際欄位數調整 */
+  width: 100%;
+  border-collapse: collapse;
 }
 </style>

@@ -1,5 +1,6 @@
 <template>
     <div class="trending-table">
+      <div class="table-wrap">
         <table>
             <thead>
                 <tr>
@@ -18,6 +19,7 @@
                 </template>
             </tbody>
         </table>
+      </div>
     </div>
 </template>
 
@@ -105,6 +107,18 @@ watch(
 table {
     width: 100%;
     border-collapse: collapse;
+}
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-wrap table {
+  min-width: 1200px;
+  width: 100%;
+  border-collapse: collapse;
 }
 
 th,
