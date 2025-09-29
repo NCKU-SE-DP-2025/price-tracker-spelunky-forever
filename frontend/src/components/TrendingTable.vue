@@ -22,73 +22,94 @@
 </template>
 
 <script>
+import { reactive, computed, watch } from 'vue';
+
 export default {
-    props: {
-        data: {
-            type: Object,
-            required: true
-        }
-    },
-    data() {
-        return {
-            yearData: {}
-        };
-    },
-    computed: {
-        months() {
-            return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        },
-        years() {
-            const startYear = new Date(this.data.時間起點).getFullYear();
-            const endYear = new Date(this.data.時間終點).getFullYear();
-            let years = [];
-            for (let year = startYear; year <= endYear; year++) {
-                years.push(year);
-            }
-            return years;
-        },
-    },
-    methods: {
-        getYearData(year) {
-            return this.yearData[year];
-        },
-        processInitData() {
-            const startMonth = new Date(this.data.時間起點).getMonth() + 1;
-            const endMonth = new Date(this.data.時間終點).getMonth() + 1;
-            const startYear = new Date(this.data.時間起點).getFullYear();
-            const endYear = new Date(this.data.時間終點).getFullYear();
-            this.yearData = {};
-            for (let year = startYear; year <= endYear; year++) {
-                let yearPrices = [];
-                for (let month = 1; month <= 12; month++) {
-                    if (year === startYear && month < startMonth) {
-                        yearPrices.push('0');
-                    } else if (year === endYear && month > endMonth) {
-                        yearPrices.push('0');
-                    } else {
-                        yearPrices.push(this.data.統計值.split(',')[month + (year - startYear) * 12 - startMonth]);
-                    }
-                }
-                this.yearData[year] = yearPrices;
-            }
-        },
-        valueDisplay(value) {
-            return value === '0' ? '-' : value;
-        }
-    },
-    watch: {
-        data: {
-            deep: true,
-            handler(newVal) {
-                if (newVal) {
-                    this.processInitData();
-                }
-            }
-        }
-    },
-    created() {
-        this.processInitData();
+  props: {
+    data: {
+      type: Object,
+      required: true
     }
+  },
+  setup(props) {
+    // reactive container for yearData (object mapping year -> array of 12 values)
+    const yearData = reactive({});
+
+    // months (same as original)
+    const months = computed(() => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']);
+
+    // years computed from props.data 時間起點/終點
+    const years = computed(() => {
+      const startYear = new Date(props.data.時間起點).getFullYear();
+      const endYear = new Date(props.data.時間終點).getFullYear();
+      const ys = [];
+      for (let year = startYear; year <= endYear; year++) {
+        ys.push(year);
+      }
+      return ys;
+    });
+
+    // method: processInitData - same logic as original
+    function processInitData() {
+      const startMonth = new Date(props.data.時間起點).getMonth() + 1;
+      const endMonth = new Date(props.data.時間終點).getMonth() + 1;
+      const startYear = new Date(props.data.時間起點).getFullYear();
+      const endYear = new Date(props.data.時間終點).getFullYear();
+
+      // clear existing keys
+      Object.keys(yearData).forEach(k => delete yearData[k]);
+
+      // split once to avoid repeated splitting
+      const stats = String(props.data.統計值).split(',');
+
+      for (let year = startYear; year <= endYear; year++) {
+        const yearPrices = [];
+        for (let month = 1; month <= 12; month++) {
+          if (year === startYear && month < startMonth) {
+            yearPrices.push('0');
+          } else if (year === endYear && month > endMonth) {
+            yearPrices.push('0');
+          } else {
+            // replicate original index calculation:
+            // index = month + (year - startYear) * 12 - startMonth
+            const idx = month + (year - startYear) * 12 - startMonth;
+            yearPrices.push(stats[idx]);
+          }
+        }
+        // assign to reactive object
+        yearData[year] = yearPrices;
+      }
+    }
+
+    // helper: return array for a given year
+    function getYearData(year) {
+      return yearData[year] || Array(12).fill('0');
+    }
+
+    // helper: format display (same as original)
+    function valueDisplay(value) {
+      return value === '0' ? '-' : value;
+    }
+
+    // watch data deeply and call processInitData when it changes, and call immediately (like created)
+    watch(
+      () => props.data,
+      (newVal) => {
+        if (newVal) {
+          processInitData();
+        }
+      },
+      { deep: true, immediate: true }
+    );
+
+    // expose to template
+    return {
+      months,
+      years,
+      getYearData,
+      valueDisplay
+    };
+  }
 };
 </script>
 

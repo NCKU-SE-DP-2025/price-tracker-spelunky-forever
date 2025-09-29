@@ -20,55 +20,61 @@
 </template>
 
 <script>
+import { ref, computed, onMounted } from 'vue';
 import { useNewsStore } from '@/stores/news';
-import { onMounted } from 'vue';
 import NewsItem from '@/components/NewsItem.vue';
 import NewsDialog from '@/components/NewsDialog.vue';
 
 export default {
-    components: {
-        NewsItem,
-        NewsDialog
-    },
-    data() {
-        return {
-            prompt: '',
-            newsStore: useNewsStore(),
-            selectedNews: null,
-            isDialogVisible: false
-        };
-    },
-    created() {
-        onMounted(() => {
-            this.newsStore.fetchNews();
-        });
-    },
-    computed: {
-        newsList() {
-            return this.newsStore.getNews;
-        },
-        isLoading() {
-            return this.newsStore.isLoading;
-        },
-        isEmpty() {
-            return this.newsStore.newsList.length === 0;
-        }
-    },
-    methods: {
-        searchNewsBasedOnPrompt() {
-            if (this.prompt.trim()) {
-                this.newsStore.promptSearchNews(this.prompt);
-                this.prompt = '';
-            }
-        },
-        showDialog(news) {
-            this.selectedNews = news;
-            this.isDialogVisible = true;
-        },
-        fetchSummary(content, index){
-            this.newsStore.fetchNewsSummary(content, index);
-        }
+  components: {
+    NewsItem,
+    NewsDialog
+  },
+  setup() {
+    const prompt = ref('');
+    const newsStore = useNewsStore();
+    const selectedNews = ref(null);
+    const isDialogVisible = ref(false);
+
+    // fetch news on mount (same behavior as original created/onMounted usage)
+    onMounted(() => {
+      newsStore.fetchNews();
+    });
+
+    // computed wrappers (mirror original computed properties)
+    const newsList = computed(() => newsStore.getNews);
+    const isLoading = computed(() => newsStore.isLoading);
+    const isEmpty = computed(() => Array.isArray(newsStore.newsList) ? newsStore.newsList.length === 0 : true);
+
+    // methods (preserve original behavior)
+    function searchNewsBasedOnPrompt() {
+      if (prompt.value.trim()) {
+        newsStore.promptSearchNews(prompt.value);
+        prompt.value = '';
+      }
     }
+
+    function showDialog(news) {
+      selectedNews.value = news;
+      isDialogVisible.value = true;
+    }
+
+    function fetchSummary(content, index) {
+      newsStore.fetchNewsSummary(content, index);
+    }
+
+    return {
+      prompt,
+      newsList,
+      isLoading,
+      isEmpty,
+      selectedNews,
+      isDialogVisible,
+      searchNewsBasedOnPrompt,
+      showDialog,
+      fetchSummary
+    };
+  }
 };
 </script>
 

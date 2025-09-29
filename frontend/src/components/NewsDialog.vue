@@ -14,30 +14,40 @@
 </template>
 
 <script>
+import { computed } from 'vue';
+
 export default {
-    props: {
-        news: {
-            type: Object,
-            required: true
-        },
-        visible: {
-            type: Boolean,
-            default: false
-        }
+  props: {
+    news: {
+      type: Object,
+      required: true
     },
-    methods: {
-        close() {
-            this.$emit('update:visible', false);
-        }
-    },
-    computed:{
-        formattedContent() {
-            if(!this.news.content) return '';
-            return this.news.content.split('\r\n');
-        }
+    visible: {
+      type: Boolean,
+      default: false
     }
+  },
+  emits: ['update:visible'],
+  setup(props, { emit }) {
+    // 與原本 Options API 行為一致：如果沒有 content，回傳空字串 ''
+    const formattedContent = computed(() => {
+      if (!props.news || !props.news.content) return '';
+      return props.news.content.split('\r\n');
+    });
+
+    function close() {
+      emit('update:visible', false);
+    }
+
+    // 注意：不要把 props 名稱 (news, visible) 再回傳，template 可以直接讀 props
+    return {
+      formattedContent,
+      close
+    };
+  }
 };
 </script>
+
 
 <style scoped>
 .news-dialog {

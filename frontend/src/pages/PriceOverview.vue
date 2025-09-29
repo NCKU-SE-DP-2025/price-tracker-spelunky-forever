@@ -9,49 +9,26 @@
     </div>
 </template>
 
-<script>
+<script setup>
+import { computed } from 'vue';
 import CategoryPrice from '@/components/CategoryPrice.vue';
 import Categories from '@/constants/categories';
 import { usePricesStore } from '@/stores/prices';
 
-export default {
-    name: 'PriceOverview',
-    data() {
-        return {
-            prices: {},
-        };
-    },
-    components: {
-        CategoryPrice
-    },
-    computed: {
-        categoryList() {
-            return Object.keys(Categories);
-        },
-        isLoading(){
-            const store = usePricesStore();
-            return store.isLoading;
-        },
-        errorMessage(){
-            const store = usePricesStore();
-            return store.errorMessage;
-        },
-        updateTime(){
-            const store = usePricesStore();
-            return store.updatedTime;
-        }
-    },
-    methods:{
-        getPriceData(category){
-            const store = usePricesStore();
-            return store.getPricesByCategory(category);
-        }    
-    },
-    created() {
-        const store = usePricesStore();
-        store.fetchPrices();
-    }
-};
+// use the store once and reuse
+const store = usePricesStore();
+
+const categoryList = computed(() => Object.keys(Categories));
+const isLoading = computed(() => store.isLoading);
+const errorMessage = computed(() => store.errorMessage);
+const updateTime = computed(() => store.updatedTime);
+
+function getPriceData(category) {
+    return store.getPricesByCategory(category);
+}
+
+// 呼叫 fetchPrices()（原本在 created() 執行），在 setup 階段立即執行以保持行為一致
+store.fetchPrices();
 </script>
 
 <style scoped>

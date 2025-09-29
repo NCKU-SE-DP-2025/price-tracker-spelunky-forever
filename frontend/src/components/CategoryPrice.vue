@@ -23,46 +23,57 @@
 </template>
 
 <script>
+import { computed } from 'vue';
 import Categories from '@/constants/categories';
 
 export default {
-    props: {
-        category: {
-            type: String,
-            required: true
-        },
-        priceData: {
-            type: Array,
-            required: true
-        },
-        isLoading: {
-            type: Boolean,
-            required: true
-        },
-        errorMessage: {
-            type: String,
-            required: false
-        },
+  props: {
+    category: {
+      type: String,
+      required: true
     },
-    computed: {
-        categoryName() {
-            return Categories[this.category];
-        },
-        latestDataTime(){
-            let timeTmp = this.priceData[0].時間終點.split('-');
-            return timeTmp[0] + '.' + timeTmp[1];
-        }
+    priceData: {
+      type: Array,
+      required: true
     },
-    methods: {
-        latestPrice(prices_str) {
-            let number = prices_str.split(',').map(Number);
-            let i = number.length - 1;
-            while (i >= 0 && number[i]==0) {
-                i--;
-            }
-            return i==-1 ? "-" : number[i];
-        }
+    isLoading: {
+      type: Boolean,
+      required: true
+    },
+    errorMessage: {
+      type: String,
+      required: false
     }
+  },
+
+  setup(props) {
+    // computed: categoryName
+    const categoryName = computed(() => {
+      return Categories[props.category];
+    });
+
+    // computed: latestDataTime (維持原本行為)
+    const latestDataTime = computed(() => {
+      let timeTmp = props.priceData[0].時間終點.split('-');
+      return timeTmp[0] + '.' + timeTmp[1];
+    });
+
+    // method: latestPrice (維持原本邏輯)
+    function latestPrice(prices_str) {
+      let number = prices_str.split(',').map(Number);
+      let i = number.length - 1;
+      while (i >= 0 && number[i] == 0) {
+        i--;
+      }
+      return i == -1 ? '-' : number[i];
+    }
+
+    return {
+      categoryName,
+      latestDataTime,
+      latestPrice
+    };
+  }
 };
 </script>
 
