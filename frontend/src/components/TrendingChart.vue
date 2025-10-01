@@ -42,14 +42,12 @@ function createChart(data) {
   let prices = data.統計值.split(',').map(price => parseInt(price, 10))
   let labels = generateLabels(data.時間起點, data.時間終點, prices.length)
 
-  // 處理前導0並調整起始標籤
   let firstNonZeroIndex = prices.findIndex(price => price !== 0)
   if (firstNonZeroIndex > 0) {
     prices = prices.slice(firstNonZeroIndex)
     labels = labels.slice(firstNonZeroIndex)
   }
 
-  // 替換中間的0並記錄點的位置來標註
   let lastValidPrice = prices[0]
   const annotations = []
   prices = prices.map((price, index) => {

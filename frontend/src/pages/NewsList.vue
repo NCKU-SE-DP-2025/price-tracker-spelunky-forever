@@ -30,19 +30,16 @@ const newsStore = useNewsStore();
 const selectedNews = ref(null);
 const isDialogVisible = ref(false);
 
-// fetch news on mount
 onMounted(() => {
   newsStore.fetchNews();
 });
 
-// computed wrappers
 const newsList = computed(() => newsStore.getNews);
 const isLoading = computed(() => newsStore.isLoading);
 const isEmpty = computed(() =>
   Array.isArray(newsStore.newsList) ? newsStore.newsList.length === 0 : true
 );
 
-// methods
 function searchNewsBasedOnPrompt() {
   if (prompt.value.trim()) {
     newsStore.promptSearchNews(prompt.value);

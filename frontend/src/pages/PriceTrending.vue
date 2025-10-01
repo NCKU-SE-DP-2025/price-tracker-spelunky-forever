@@ -29,25 +29,20 @@ import Categories from '@/constants/categories';
 import TrendingTable from '@/components/TrendingTable.vue';
 import TrendingChart from '@/components/TrendingChart.vue';
 
-// single store instance (used throughout)
 const store = usePricesStore();
 
-// reactive state (mirrors original data)
 const selectedCategory = ref('');
 const selectedProduct = ref('');
 const productList = ref([]);
-const productData = ref(null); // original code set this to null in watcher
+const productData = ref(null);
 
-// computed properties (mirrors original computed)
 const categoryKeys = computed(() => Object.keys(Categories));
 const products = computed(() => selectedCategory.value ? store.getPricesByCategory(selectedCategory.value) : []);
 
-// methods
 function categoryName(category) {
     return Categories[category];
 }
 
-// watchers (mirror original watch behavior)
 watch(selectedCategory, (newVal) => {
     selectedProduct.value = '';
     productList.value = store.getProductList(newVal);
@@ -58,7 +53,6 @@ watch(selectedProduct, (newVal) => {
     console.log(newVal);
 });
 
-// call fetchPrices() as original created() did (run immediately to keep behavior)
 store.fetchPrices();
 </script>
 

@@ -33,13 +33,10 @@ const props = defineProps({
   }
 })
 
-// reactive container for yearData
 const yearData = reactive({})
 
-// months
 const months = computed(() => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
 
-// years computed from props.data
 const years = computed(() => {
   const startYear = new Date(props.data.時間起點).getFullYear()
   const endYear = new Date(props.data.時間終點).getFullYear()
@@ -50,14 +47,12 @@ const years = computed(() => {
   return ys
 })
 
-// processInitData
 function processInitData() {
   const startMonth = new Date(props.data.時間起點).getMonth() + 1
   const endMonth = new Date(props.data.時間終點).getMonth() + 1
   const startYear = new Date(props.data.時間起點).getFullYear()
   const endYear = new Date(props.data.時間終點).getFullYear()
 
-  // clear existing keys
   Object.keys(yearData).forEach(k => delete yearData[k])
 
   const stats = String(props.data.統計值).split(',')
@@ -78,7 +73,6 @@ function processInitData() {
   }
 }
 
-// helpers
 function getYearData(year) {
   return yearData[year] || Array(12).fill('0')
 }
@@ -87,7 +81,6 @@ function valueDisplay(value) {
   return value === '0' ? '-' : value
 }
 
-// watch data
 watch(
   () => props.data,
   (newVal) => {

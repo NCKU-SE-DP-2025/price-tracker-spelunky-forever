@@ -79,7 +79,6 @@ function onKeydown(e) {
   }
 }
 function handleScroll() {
-  // 自動收合 + 加上捲動陰影
   if (window.scrollY > 10) {
     hasScrolled.value = true
     if (isOpen.value) close()
@@ -87,7 +86,6 @@ function handleScroll() {
     hasScrolled.value = false
   }
 }
-// 判斷當前路徑是否匹配
 function isActive(path) {
   return route.path.startsWith(path)
 }
@@ -105,7 +103,6 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-/* 原本樣式完全保留，新增 active 與捲動陰影 */
 .burger {
   display: none;
 }
@@ -129,7 +126,6 @@ onBeforeUnmount(() => {
   box-shadow: 0 0 5px #000000;
   transition: box-shadow .3s ease;
 }
-/* 捲動時加重陰影 */
 .navbar-scrolled {
   box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
@@ -158,7 +154,6 @@ onBeforeUnmount(() => {
   text-decoration: none;
   color: #575B5D;
 }
-/* 目前頁面高亮 */
 .navbar li.active a {
   color: #0086f4;
   font-weight: bold;
@@ -169,6 +164,14 @@ onBeforeUnmount(() => {
   .burger {
     display: flex;
     flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 30px;                 
+    height: 30px;
+    padding: 4px;                
+    box-sizing: border-box;      
+    position: relative;          
+    z-index: 1;
   }
   .bur_bp {
     display: flex;
@@ -190,6 +193,7 @@ onBeforeUnmount(() => {
     box-shadow: 0 6px 18px rgba(0,0,0,0.06);
     pointer-events: none;
     z-index: 9;
+    gap: 10px;
   }
   .navbar ul.open {
     max-height: 500px;
@@ -200,6 +204,7 @@ onBeforeUnmount(() => {
     height: 1.5px;
     background-color: #ddd;
     width: calc(100% + 40px);
+    margin: 10px;
   }
   .navbar {
     flex-direction: column;
@@ -207,6 +212,29 @@ onBeforeUnmount(() => {
     box-shadow: 0 0 5px #000000;
     padding: 10px 20px;
     justify-content: center;
+  }
+  .burger::after {
+    content: "";
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    bottom: -6px;
+    left: -6px;
+    border-radius: 8px; 
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: transparent;
+    pointer-events: none; 
+    transition: background-color 0.12s ease, box-shadow 0.12s ease;
+    z-index: 0;
+  }
+  .burger:active::after,
+  .burger.open::after {
+    background-color: rgba(187, 182, 182, 0.644);
+    box-shadow: 0 1px 4px rgb(255, 255, 255);
+  }
+  .burger:focus-visible::after {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 140, 255, 0.12);
   }
 }
 </style>

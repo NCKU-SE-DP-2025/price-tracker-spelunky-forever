@@ -15,7 +15,6 @@ import CategoryPrice from '@/components/CategoryPrice.vue';
 import Categories from '@/constants/categories';
 import { usePricesStore } from '@/stores/prices';
 
-// use the store once and reuse
 const store = usePricesStore();
 
 const categoryList = computed(() => Object.keys(Categories));
@@ -27,7 +26,6 @@ function getPriceData(category) {
     return store.getPricesByCategory(category);
 }
 
-// 呼叫 fetchPrices()（原本在 created() 執行），在 setup 階段立即執行以保持行為一致
 store.fetchPrices();
 </script>
 

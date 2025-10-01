@@ -37,7 +37,6 @@ const userStore = useAuthStore();
 
 function validate() {
   let valid = true;
-  // reset errors without replacing the reactive object
   Object.assign(errors, { username: '', password: '', passwordConfirm: '' });
 
   if (!username.value.trim()) {

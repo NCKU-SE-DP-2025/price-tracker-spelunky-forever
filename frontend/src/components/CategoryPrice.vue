@@ -28,7 +28,6 @@
 import { computed } from 'vue'
 import Categories from '@/constants/categories'
 
-// Props
 const props = defineProps({
   category: {
     type: String,
@@ -48,16 +47,13 @@ const props = defineProps({
   }
 })
 
-// Computed: categoryName
 const categoryName = computed(() => Categories[props.category])
 
-// Computed: latestDataTime
 const latestDataTime = computed(() => {
   let timeTmp = props.priceData[0].時間終點.split('-')
   return timeTmp[0] + '.' + timeTmp[1]
 })
 
-// Method: latestPrice
 function latestPrice(prices_str) {
   let number = prices_str.split(',').map(Number)
   let i = number.length - 1
@@ -99,11 +95,11 @@ h2{
 .table-wrap {
   width: 100%;
   overflow-x: auto;
-  -webkit-overflow-scrolling: touch; /* iOS 平滑滑動 */
+  -webkit-overflow-scrolling: touch; 
 }
 
 .table-wrap table {
-  min-width: 1200px; /* 可依實際欄位數調整 */
+  min-width: 1200px; 
   width: 100%;
   border-collapse: collapse;
 }
