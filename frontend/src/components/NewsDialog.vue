@@ -8,35 +8,34 @@
                 <p>原文連結：<a :href="news.url" target="_blank">{{news.url}}</a></p>
                 <p v-for="paragraph, index in formattedContent" :key="index">{{ paragraph }}</p>
             </div>
-
         </div>
     </div>
 </template>
 
-<script>
-export default {
-    props: {
-        news: {
-            type: Object,
-            required: true
-        },
-        visible: {
-            type: Boolean,
-            default: false
-        }
-    },
-    methods: {
-        close() {
-            this.$emit('update:visible', false);
-        }
-    },
-    computed:{
-        formattedContent() {
-            if(!this.news.content) return '';
-            return this.news.content.split('\r\n');
-        }
-    }
-};
+<script setup>
+import { computed } from 'vue'
+
+const props = defineProps({
+  news: {
+    type: Object,
+    required: true
+  },
+  visible: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const emit = defineEmits(['update:visible'])
+
+const formattedContent = computed(() => {
+  if (!props.news || !props.news.content) return ''
+  return props.news.content.split('\r\n')
+})
+
+function close() {
+  emit('update:visible', false)
+}
 </script>
 
 <style scoped>
