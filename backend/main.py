@@ -315,7 +315,7 @@ def create_access_token(data, expires_delta=None):
     else:
         expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    print(to_encode)
+    #print(to_encode)
     encoded_jwt = jwt.encode(to_encode, '1892dhianiandowqd0n', algorithm="HS256")
     return encoded_jwt
 
