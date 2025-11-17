@@ -35,7 +35,7 @@ def test_get_necessities_prices(mock_get, mock_necessities_data):
     mock_response.status_code = 200
     mock_response.json.return_value = mock_necessities_data
 
-    response = client.get("/api/v1/prices/necessities-price")
+    response = client.get("/api/v1/news/prices/necessities-price")
 
     assert response.status_code == 200
     data = response.json()
@@ -51,7 +51,7 @@ def test_get_necessities_prices_with_query(mock_get, mock_necessities_data):
     mock_response.status_code = 200
     mock_response.json.return_value = mock_necessities_data
 
-    response = client.get("/api/v1/prices/necessities-price", params={"category": "鮮乳", "commodity": "統一瑞穗高優質鮮乳"})
+    response = client.get("/api/v1/news/prices/necessities-price", params={"category": "鮮乳", "commodity": "統一瑞穗高優質鮮乳"})
 
     assert response.status_code == 200
     data = response.json()
@@ -66,7 +66,7 @@ def test_get_necessities_prices_with_query(mock_get, mock_necessities_data):
 #     mock_response.status_code = 400
 #     mock_response.raise_for_status.side_effect = requests.RequestException("Error fetching data")
 
-#     response = client.get("/api/v1/prices/necessities-price")
+#     response = client.get("/api/v1/news/prices/necessities-price")
 
 #     assert response.status_code == 400
 #     assert response.json()["detail"] == "Error fetching data"

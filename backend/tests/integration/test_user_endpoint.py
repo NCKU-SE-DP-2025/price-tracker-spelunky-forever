@@ -21,7 +21,14 @@ engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread
 
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+# ----------------------------
+# reset schema on module import
+# (drop ALL tables then recreate them on the test DB)
+# ----------------------------
+# 注意：確保測試執行時沒有其他開啟的 session 否則 drop_all 會失敗。
+Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
+# ----------------------------
 
 
 def override_session_opener():

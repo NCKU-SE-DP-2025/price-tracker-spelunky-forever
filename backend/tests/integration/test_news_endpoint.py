@@ -38,8 +38,14 @@ engine = create_engine(
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# ensure tables exist on the test DB (uses Base from app.db.base)
+# ----------------------------
+# reset schema on module import
+# (drop ALL tables then recreate them on the test DB)
+# ----------------------------
+# 注意：確保測試執行時沒有其他開啟的 session 否則 drop_all 會失敗。
+Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
+# ----------------------------
 
 
 def override_session_opener():
@@ -142,7 +148,22 @@ def test_read_user_news(test_user, test_token, test_articles):
 
 
 def mock_openai(mocker, return_content):
-    return mocker.patch("app.utils.openai_client.OpenAIService.chat", return_value=return_content)
+    # 假設實際 code 會像: openai.Client().chat.completions.create(...) -> completion
+    mock_client = mocker.patch("app.utils.openai_client.OpenAI")  # adjust import path if different
+
+    # build nested objects
+    mock_message = Mock()
+    mock_message.content = return_content  # e.g. JSON string
+
+    mock_choice = Mock()
+    mock_choice.message = mock_message
+
+    mock_completion = Mock()
+    mock_completion.choices = [mock_choice]
+
+    # ensure calling .chat.completions.create() returns our mock_completion
+    mock_client.return_value.chat.completions.create.return_value = mock_completion
+    return mock_client
 
 
 def test_search_news(mocker):
@@ -180,8 +201,11 @@ def test_search_news(mocker):
 def test_news_summary(mocker, test_token):
     headers = {"Authorization": f"Bearer {test_token}"}
     openai_response = json.dumps({"影響": "test impact", "原因": "test reason"})
-    mock_openai(mocker, openai_response)
-
+    # 改成 patch OpenAIService 的 constructor，回傳一個具有 chat 方法的 Mock instance
+    mock_instance = Mock()
+    mock_instance.chat = Mock(return_value=openai_response)
+    mocker.patch("app.api.v1.news.OpenAIService", return_value=mock_instance)
+    
     request_body = NewsSummaryRequestSchema(content="Test news content")
     response = client.post("/api/v1/news/news_summary", json=request_body.dict(), headers=headers)
 
