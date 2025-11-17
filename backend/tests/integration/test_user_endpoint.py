@@ -1,11 +1,17 @@
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, StaticPool
+from sqlalchemy import create_engine
+from sqlalchemy.pool import StaticPool
 from sqlalchemy.orm import sessionmaker
 from main import app
-from main import Base, User, session_opener
+from app.db.base import Base
+from app.models.user import User
+from app.db.session import get_db_session
 from jose import jwt
-from main import pwd_context
+from passlib.context import CryptContext
+# local password context for hashing in tests (avoid depending on main's global)
+from passlib.context import CryptContext
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 SECRET_KEY = "1892dhianiandowqd0n"
 ALGORITHM = "HS256"
@@ -26,7 +32,7 @@ def override_session_opener():
         db.close()
 
 
-app.dependency_overrides[session_opener] = override_session_opener
+app.dependency_overrides[get_db_session] = override_session_opener
 
 client = TestClient(app)
 

@@ -29,7 +29,7 @@ def mock_necessities_data():
     ]
 
 
-@patch("main.requests.get")
+@patch("app.services.news_service.requests.get")
 def test_get_necessities_prices(mock_get, mock_necessities_data):
     mock_response = mock_get.return_value
     mock_response.status_code = 200
@@ -45,7 +45,7 @@ def test_get_necessities_prices(mock_get, mock_necessities_data):
     assert data[1]["產品名稱"] == "味全林鳳營鮮乳"
 
 
-@patch("main.requests.get")
+@patch("app.services.news_service.requests.get")
 def test_get_necessities_prices_with_query(mock_get, mock_necessities_data):
     mock_response = mock_get.return_value
     mock_response.status_code = 200
@@ -60,7 +60,7 @@ def test_get_necessities_prices_with_query(mock_get, mock_necessities_data):
     assert data[0]["產品名稱"] == "統一瑞穗高優質鮮乳"
 
 
-# @patch("main.requests.get")
+# @patch("app.services.news_service.requests.get")
 # def test_get_necessities_prices_error_handling(mock_get):
 #     mock_response = mock_get.return_value
 #     mock_response.status_code = 400
