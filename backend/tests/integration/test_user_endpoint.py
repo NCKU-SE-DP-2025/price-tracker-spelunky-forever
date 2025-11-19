@@ -4,9 +4,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.pool import StaticPool
 from sqlalchemy.orm import sessionmaker
 from main import app
-from app.db.base import Base
-from app.models.user import User
-from app.db.session import get_db_session
+from src.db.base import Base
+from src.models.user import User
+from src.db.session import get_db_session
 from jose import jwt
 from passlib.context import CryptContext
 # local password context for hashing in tests (avoid depending on main's global)

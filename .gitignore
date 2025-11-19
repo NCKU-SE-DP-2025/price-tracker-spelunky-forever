@@ -2,6 +2,6 @@
 __pycache__
 .env
 .venv
-test.db       # 測試資料庫
-.coverage     # 測試覆蓋率數據
-coverage.xml  # 測試覆蓋率報告
+test.db     
+.coverage  
+coverage.xml

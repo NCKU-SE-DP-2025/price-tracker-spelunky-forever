@@ -7,17 +7,17 @@ import json
 from jose import jwt
 from main import app
 # Base (metadata) 用來 create_all，通常放在 app/db/base.py
-from app.db.base import Base
+from src.db.base import Base
 
 # ORM models
-from app.models.news import NewsArticle
-from app.models.user import User
+from src.models.news import NewsArticle
+from src.models.user import User
 
 # DB session dependency used by the FastAPI routes (通常在 app/db/session.py)
-from app.db.session import get_db_session
+from src.db.session import get_db_session
 
 # Schemas (Pydantic) for requests
-from app.schemas.news import NewsSummaryRequestSchema, PromptRequest
+from src.schemas.news import NewsSummaryRequestSchema, PromptRequest
 
 # local password context for hashing in tests (avoid depending on main's global)
 from passlib.context import CryptContext
@@ -51,7 +51,7 @@ Base.metadata.create_all(bind=engine)
 def override_session_opener():
     """
     Provide a DB session to override the app's DB dependency.
-    We assume the app routes depend on get_db_session (from app.db.session).
+    We assume the app routes depend on get_db_session (from src.db.session).
     """
     try:
         db = TestingSessionLocal()
@@ -149,7 +149,7 @@ def test_read_user_news(test_user, test_token, test_articles):
 
 def mock_openai(mocker, return_content):
     # 假設實際 code 會像: openai.Client().chat.completions.create(...) -> completion
-    mock_client = mocker.patch("app.utils.openai_client.OpenAI")  # adjust import path if different
+    mock_client = mocker.patch("src.utils.openai_client.OpenAI")  # adjust import path if different
 
     # build nested objects
     mock_message = Mock()
@@ -168,7 +168,7 @@ def mock_openai(mocker, return_content):
 
 def test_search_news(mocker):
     mock_openai(mocker, "keywords")
-    mocker.patch("app.services.news_service.NewsService.fetch_news_info", return_value=[
+    mocker.patch("src.services.news_service.NewsService.fetch_news_info", return_value=[
         {"titleLink": "http://example.com/news1"}
     ])
 
@@ -204,7 +204,7 @@ def test_news_summary(mocker, test_token):
     # 改成 patch OpenAIService 的 constructor，回傳一個具有 chat 方法的 Mock instance
     mock_instance = Mock()
     mock_instance.chat = Mock(return_value=openai_response)
-    mocker.patch("app.api.v1.news.OpenAIService", return_value=mock_instance)
+    mocker.patch("src.api.v1.news.OpenAIService", return_value=mock_instance)
     
     request_body = NewsSummaryRequestSchema(content="Test news content")
     response = client.post("/api/v1/news/news_summary", json=request_body.dict(), headers=headers)

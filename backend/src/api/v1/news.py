@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, Query
-from app.db.session import get_db_session, SessionLocal
-from app.repositories.news_repository import NewsRepository
-from app.services.news_service import NewsService
-from app.utils.openai_client import OpenAIService
-from app.schemas.news import PromptRequest, NewsSummaryRequestSchema, NewsOut
-from app.core.config import settings
-from app.services.auth_service import AuthService
+from src.db.session import get_db_session, SessionLocal
+from src.repositories.news_repository import NewsRepository
+from src.services.news_service import NewsService
+from src.utils.openai_client import OpenAIService
+from src.schemas.news import PromptRequest, NewsSummaryRequestSchema, NewsOut
+from src.core.config import settings
+from src.services.auth_service import AuthService
 from fastapi.security import OAuth2PasswordBearer
 from datetime import timedelta
 import requests

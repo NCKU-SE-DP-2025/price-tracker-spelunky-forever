@@ -1,9 +1,9 @@
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
-from app.db.session import get_db_session
-from app.services.auth_service import AuthService
-from app.core.config import settings
+from src.db.session import get_db_session
+from src.services.auth_service import AuthService
+from src.core.config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/users/login")

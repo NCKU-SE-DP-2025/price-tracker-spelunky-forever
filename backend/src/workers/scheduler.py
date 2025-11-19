@@ -1,7 +1,7 @@
 from apscheduler.schedulers.background import BackgroundScheduler
-from app.services.news_service import NewsService
-from app.utils.openai_client import OpenAIService
-from app.db.session import SessionLocal
+from src.services.news_service import NewsService
+from src.utils.openai_client import OpenAIService
+from src.db.session import SessionLocal
 
 scheduler = BackgroundScheduler()
 

@@ -1,8 +1,8 @@
 import json
 from urllib.parse import quote
 import requests
-from app.utils.scraper import Scraper
-from app.repositories.news_repository import NewsRepository
+from src.utils.scraper import Scraper
+from src.repositories.news_repository import NewsRepository
 
 class NewsService:
     def __init__(self, db, openai_client):
