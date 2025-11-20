@@ -1,5 +1,5 @@
 from sqlalchemy import delete, insert
-from app.models.news import NewsArticle, user_news_association_table
+from src.models.news import NewsArticle, user_news_association_table
 
 class NewsRepository:
     def __init__(self, db):

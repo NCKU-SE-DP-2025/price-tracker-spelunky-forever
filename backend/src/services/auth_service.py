@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from fastapi import HTTPException, status
-from app.repositories.user_repository import UserRepository
+from src.repositories.user_repository import UserRepository
 
 class AuthService:
     def __init__(self, db, secret_key: str, algorithm: str):

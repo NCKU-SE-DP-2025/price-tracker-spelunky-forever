@@ -1,25 +1,58 @@
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, StaticPool
+from sqlalchemy import create_engine
+from sqlalchemy.pool import StaticPool
 from sqlalchemy.orm import sessionmaker
 import json
 from jose import jwt
 from main import app
-from main import Base, NewsArticle, User, session_opener, user_news_association_table
-from main import NewsSumaryRequestSchema, PromptRequest
-from main import pwd_context
+# Base (metadata) 用來 create_all，通常放在 app/db/base.py
+from src.db.base import Base
+
+# ORM models
+from src.models.news import NewsArticle
+from src.models.user import User
+
+# DB session dependency used by the FastAPI routes (通常在 app/db/session.py)
+from src.db.session import get_db_session
+
+# Schemas (Pydantic) for requests
+from src.schemas.news import NewsSummaryRequestSchema, PromptRequest
+
+# local password context for hashing in tests (avoid depending on main's global)
+from passlib.context import CryptContext
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 from unittest.mock import Mock
 
 
 SECRET_KEY = "1892dhianiandowqd0n"
 ALGORITHM = "HS256"
+
+# use a separate test sqlite DB file (persistent in workspace, easier for debugging)
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}, poolclass=StaticPool)
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool
+)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# ----------------------------
+# reset schema on module import
+# (drop ALL tables then recreate them on the test DB)
+# ----------------------------
+# 注意：確保測試執行時沒有其他開啟的 session 否則 drop_all 會失敗。
+Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
+# ----------------------------
 
 
 def override_session_opener():
+    """
+    Provide a DB session to override the app's DB dependency.
+    We assume the app routes depend on get_db_session (from src.db.session).
+    """
     try:
         db = TestingSessionLocal()
         yield db
@@ -27,8 +60,11 @@ def override_session_opener():
         db.close()
 
 
-app.dependency_overrides[session_opener] = override_session_opener
+# Override the FastAPI dependency that routes actually use.
+# IMPORTANT: if your real dependency function has a different name, replace get_db_session accordingly.
+app.dependency_overrides[get_db_session] = override_session_opener
 client = TestClient(app)
+
 
 @pytest.fixture(scope="module")
 def clear_users():
@@ -36,8 +72,10 @@ def clear_users():
         db.query(User).delete()
         db.commit()
 
+
 @pytest.fixture(scope="module")
 def test_user(clear_users):
+    # use local pwd_context to hash the test password
     hashed_password = pwd_context.hash("testpassword")
 
     with next(override_session_opener()) as db:
@@ -108,11 +146,14 @@ def test_read_user_news(test_user, test_token, test_articles):
     assert json_response[1]["title"] == "Test News 1"
     assert json_response[1]["is_upvoted"] is False
 
-def mock_openai(mocker, return_content):
-    mock_openai_client = mocker.patch('main.OpenAI')
 
+def mock_openai(mocker, return_content):
+    # 假設實際 code 會像: openai.Client().chat.completions.create(...) -> completion
+    mock_client = mocker.patch("src.utils.openai_client.OpenAI")  # adjust import path if different
+
+    # build nested objects
     mock_message = Mock()
-    mock_message.content = return_content
+    mock_message.content = return_content  # e.g. JSON string
 
     mock_choice = Mock()
     mock_choice.message = mock_message
@@ -120,19 +161,20 @@ def mock_openai(mocker, return_content):
     mock_completion = Mock()
     mock_completion.choices = [mock_choice]
 
-    mock_openai_client.return_value.chat.completions.create.return_value = mock_completion
+    # ensure calling .chat.completions.create() returns our mock_completion
+    mock_client.return_value.chat.completions.create.return_value = mock_completion
+    return mock_client
 
-    return mock_openai_client
 
 def test_search_news(mocker):
     mock_openai(mocker, "keywords")
-
-    mock_get_new_info = mocker.patch("main.get_new_info", return_value=[
+    mocker.patch("src.services.news_service.NewsService.fetch_news_info", return_value=[
         {"titleLink": "http://example.com/news1"}
     ])
 
-    mock_get = mocker.patch("main.requests.get", return_value=mocker.Mock(
-        text="""
+    # patch requests.get globally (works for most modules)
+    fake_resp = Mock()
+    fake_resp.text = """
         <html>
         <h1 class="article-content__title">Test Title</h1>
         <time class="article-content__time">2024-09-10</time>
@@ -141,7 +183,7 @@ def test_search_news(mocker):
         </section>
         </html>
         """
-    ))
+    mocker.patch("requests.get", return_value=fake_resp)
 
     request_body = {"prompt": "Test search prompt"}
 
@@ -159,9 +201,12 @@ def test_search_news(mocker):
 def test_news_summary(mocker, test_token):
     headers = {"Authorization": f"Bearer {test_token}"}
     openai_response = json.dumps({"影響": "test impact", "原因": "test reason"})
-    mock_openai(mocker, openai_response)
-
-    request_body = NewsSumaryRequestSchema(content="Test news content")
+    # 改成 patch OpenAIService 的 constructor，回傳一個具有 chat 方法的 Mock instance
+    mock_instance = Mock()
+    mock_instance.chat = Mock(return_value=openai_response)
+    mocker.patch("src.api.v1.news.OpenAIService", return_value=mock_instance)
+    
+    request_body = NewsSummaryRequestSchema(content="Test news content")
     response = client.post("/api/v1/news/news_summary", json=request_body.dict(), headers=headers)
 
     assert response.status_code == 200

@@ -2,18 +2,18 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.core.config import settings  # 注意我們在 config.py 用 settings 實例
-from app.core.logging_ import init_sentry
-from app.db.session import SessionLocal, init_db
-from app.workers.scheduler import scheduler, schedule_news_job
-from app.services.news_service import NewsService
-from app.utils.openai_client import OpenAIService
+from src.core.config import settings  # 注意我們在 config.py 用 settings 實例
+from src.core.logging_ import init_sentry
+from src.db.session import SessionLocal, init_db
+from src.workers.scheduler import scheduler, schedule_news_job
+from src.services.news_service import NewsService
+from src.utils.openai_client import OpenAIService
 
 # routers
-from app.api.v1 import news as news_router_module, users as users_router_module
+from src.api.v1 import news as news_router_module, users as users_router_module
 
 # <-- 正確匯入 model（不要從 router 拿 model） -->
-from app.models.news import NewsModel  # <- 這裡改為直接 import model
+from src.models.news import NewsModel  # <- 這裡改為直接 import model
 
 init_sentry(settings)
 

@@ -1,11 +1,17 @@
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, StaticPool
+from sqlalchemy import create_engine
+from sqlalchemy.pool import StaticPool
 from sqlalchemy.orm import sessionmaker
 from main import app
-from main import Base, User, session_opener
+from src.db.base import Base
+from src.models.user import User
+from src.db.session import get_db_session
 from jose import jwt
-from main import pwd_context
+from passlib.context import CryptContext
+# local password context for hashing in tests (avoid depending on main's global)
+from passlib.context import CryptContext
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 SECRET_KEY = "1892dhianiandowqd0n"
 ALGORITHM = "HS256"
@@ -15,7 +21,14 @@ engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread
 
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+# ----------------------------
+# reset schema on module import
+# (drop ALL tables then recreate them on the test DB)
+# ----------------------------
+# 注意：確保測試執行時沒有其他開啟的 session 否則 drop_all 會失敗。
+Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
+# ----------------------------
 
 
 def override_session_opener():
@@ -26,7 +39,7 @@ def override_session_opener():
         db.close()
 
 
-app.dependency_overrides[session_opener] = override_session_opener
+app.dependency_overrides[get_db_session] = override_session_opener
 
 client = TestClient(app)
 

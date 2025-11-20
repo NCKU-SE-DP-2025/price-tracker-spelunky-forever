@@ -1,16 +1,19 @@
 from fastapi import APIRouter, Depends, Query
-from app.db.session import get_db_session, SessionLocal
-from app.repositories.news_repository import NewsRepository
-from app.services.news_service import NewsService
-from app.utils.openai_client import OpenAIService
-from app.schemas.news import PromptRequest, NewsSummaryRequestSchema, NewsOut
-from app.core.config import settings
-from app.services.auth_service import AuthService
+from src.db.session import get_db_session, SessionLocal
+from src.repositories.news_repository import NewsRepository
+from src.services.news_service import NewsService
+from src.utils.openai_client import OpenAIService
+from src.schemas.news import PromptRequest, NewsSummaryRequestSchema, NewsOut
+from src.core.config import settings
+from src.services.auth_service import AuthService
 from fastapi.security import OAuth2PasswordBearer
 from datetime import timedelta
 import requests
 from bs4 import BeautifulSoup
 from itertools import count
+import json
+import re
+from typing import Any
 
 router = APIRouter()
 
@@ -113,14 +116,87 @@ def news_summary(payload: NewsSummaryRequestSchema, token: str = Depends(oauth2_
     ]
 
     result_text = openai_client.chat(summary_messages)
-    if result_text:
+    def _try_json_loads_once(s: str):
         try:
-            result = json.loads(result_text)
-            response["summary"] = result.get("影響", "")
-            response["reason"] = result.get("原因", "")
+            return json.loads(s)
         except Exception:
-            response["summary"] = ""
-            response["reason"] = ""
+            return None
+
+    # 若是 bytes -> 轉 str
+    if isinstance(result_text, (bytes, bytearray)):
+        try:
+            result_text = result_text.decode("utf-8")
+        except Exception:
+            result_text = result_text.decode("utf-8", errors="ignore")
+
+    parsed: Any = None
+
+    # 如果已經是 dict/list，就直接使用
+    if isinstance(result_text, (dict, list)):
+        parsed = result_text
+    elif isinstance(result_text, str):
+        # 連續嘗試 json.loads（處理 double-encoded），上限 3 次
+        attempt = 0
+        cur = result_text
+        while attempt < 3:
+            loaded = _try_json_loads_once(cur)
+            if loaded is None:
+                break
+            # 若載入後仍是字串，代表還包了一層 json 字串 -> 繼續嘗試
+            if isinstance(loaded, str):
+                cur = loaded
+                attempt += 1
+                continue
+            # 成功解析為 dict/list/其他物件
+            parsed = loaded
+            break
+        # 如果第一次 json.loads 直接得到 None（不能解析），則不處理 parsed（保持 None）
+    else:
+        parsed = None
+
+    # 遞迴把字串中 literal 的 unicode escape (\uXXXX 或 \\uXXXX) 轉成真實 unicode
+    _unicode_escape_pattern = re.compile(r"(?:\\\\u|\\u)[0-9a-fA-F]{4}")
+
+    def _decode_str_if_needed(s: str) -> str:
+        # 只有在字串含有 \u 或 \\u 才嘗試解碼，避免誤改其它字串
+        if not isinstance(s, str):
+            return s
+        if _unicode_escape_pattern.search(s):
+            try:
+                # 使用 unicode_escape 將 \uXXXX 轉回對應 character
+                return s.encode("utf-8").decode("unicode_escape")
+            except Exception:
+                # 若失敗則返回原字串
+                return s
+        return s
+
+    def _recursively_decode(obj: Any) -> Any:
+        if isinstance(obj, dict):
+            new = {}
+            for k, v in obj.items():
+                new_k = _decode_str_if_needed(k) if isinstance(k, str) else k
+                new_v = _recursively_decode(v)
+                new[new_k] = new_v
+            return new
+        if isinstance(obj, list):
+            return [_recursively_decode(i) for i in obj]
+        if isinstance(obj, str):
+            return _decode_str_if_needed(obj)
+        return obj
+
+    if parsed is not None:
+        parsed = _recursively_decode(parsed)
+
+    # 取值（優先以中文 key，若沒則嘗試 unicode escape key 的 fallback）
+    if isinstance(parsed, dict):
+        summary_val = parsed.get("影響", "")
+        reason_val = parsed.get("原因", "")
+        response["summary"] = summary_val or ""
+        response["reason"] = reason_val or ""
+    else:
+        response["summary"] = ""
+        response["reason"] = ""
+
     return response
 
 @router.post("/{id}/upvote")

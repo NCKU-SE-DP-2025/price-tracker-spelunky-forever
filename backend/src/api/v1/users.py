@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from app.schemas.user import UserAuthSchema, TokenResponse
-from app.repositories.user_repository import UserRepository
-from app.core.config import settings
-from app.db.session import get_db_session
-from app.services.auth_service import AuthService
-from app.api.deps import pwd_context, oauth2_scheme
+from src.schemas.user import UserAuthSchema, TokenResponse
+from src.repositories.user_repository import UserRepository
+from src.core.config import settings
+from src.db.session import get_db_session
+from src.services.auth_service import AuthService
+from src.api.deps import pwd_context, oauth2_scheme
 from datetime import timedelta
 
 router = APIRouter()

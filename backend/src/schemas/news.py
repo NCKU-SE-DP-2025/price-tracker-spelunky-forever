@@ -1,4 +1,4 @@
-# app/schemas/news.py
+# src/schemas/news.py
 from pydantic import BaseModel
 from typing import Optional
 import importlib
