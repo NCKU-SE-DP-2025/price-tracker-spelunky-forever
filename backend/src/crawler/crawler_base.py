@@ -3,7 +3,7 @@ from pydantic import AnyHttpUrl
 from tldextract import tldextract
 from sqlalchemy.orm import Session
 
-from exceptions import DomainMismatchException
+from src.crawler.exceptions import DomainMismatchException
 
 from pydantic import BaseModel, Field, AnyHttpUrl
 

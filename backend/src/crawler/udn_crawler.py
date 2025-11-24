@@ -38,9 +38,8 @@ from sqlalchemy.orm import Session
 import requests
 from urllib.parse import quote
 from src.models.news import NewsArticle
-from src.services.news_service import NewsService
 
-from crawler_base import NewsCrawlerBase, Headline, News, NewsWithSummary
+from src.crawler.crawler_base import NewsCrawlerBase, Headline, News, NewsWithSummary
 
 
 class UDNCrawler(NewsCrawlerBase):
@@ -80,11 +79,11 @@ class UDNCrawler(NewsCrawlerBase):
         return all_headlines
 
     def _fetch_news(self, search_page: int, search_term: str) -> list[Headline]:
-        news_data = []
         page_params = self._create_search_params(search_page,search_term)
         response = self._perform_request("https://udn.com/api/more",page_params)
-        news_data = response.json().get("lists", [])
-        return news_data
+        raw_data = response.json().get("lists", [])
+        headlines = [Headline(title=item['title'], url=item['titleLink']) for item in raw_data]
+        return headlines
 
     def _create_search_params(self, search_page: int, search_term: str) -> dict:
         return {
@@ -128,7 +127,7 @@ class UDNCrawler(NewsCrawlerBase):
         )
 
     def save(self, news: News, db: Session):
-        if db.query(NewsArticle).fliter(NewsArticle.url==str(news.url)).first():
+        if db.query(NewsArticle).filter(NewsArticle.url==str(news.url)).first():
             return None
         in_data=NewsArticle(
             url = news.url,
