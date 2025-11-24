@@ -6,6 +6,7 @@ from sqlalchemy.orm import sessionmaker
 import json
 from jose import jwt
 from main import app
+from collections import namedtuple
 # Base (metadata) 用來 create_all，通常放在 app/db/base.py
 from src.db.base import Base
 
@@ -173,18 +174,21 @@ def test_search_news(mocker):
     ])
 
     # patch requests.get globally (works for most modules)
-    fake_resp = Mock()
-    fake_resp.text = """
-        <html>
-        <h1 class="article-content__title">Test Title</h1>
-        <time class="article-content__time">2024-09-10</time>
-        <section class="article-content__editor">
-            <p>This is a test paragraph.</p>
-        </section>
-        </html>
-        """
-    mocker.patch("requests.get", return_value=fake_resp)
-
+    HeadlineMock = namedtuple("Headline", ["url", "title"])
+    NewsObjMock = namedtuple("News", ["url", "title", "time", "content", "summary", "reason"])
+    mocker.patch("src.services.news_service.NewsService.fetch_news_info", return_value=[HeadlineMock(url="http://example.com/news1", title="Test Headline")])
+    mocker.patch(
+        "src.crawler.udn_crawler.UDNCrawler.parse",
+        return_value=NewsObjMock(
+            url="http://example.com/news1",
+            title="Test Title",
+            time="2024-09-10",
+            content="This is a test paragraph.",
+            summary="",
+            reason=""
+        )
+    )
+    
     request_body = {"prompt": "Test search prompt"}
 
     response = client.post("/api/v1/news/search_news", json=request_body)

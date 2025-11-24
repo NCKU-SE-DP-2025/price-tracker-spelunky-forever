@@ -1,15 +1,13 @@
 from fastapi import APIRouter, Depends, Query
-from src.db.session import get_db_session, SessionLocal
+from src.db.session import get_db_session
 from src.repositories.news_repository import NewsRepository
 from src.services.news_service import NewsService
 from src.utils.openai_client import OpenAIService
-from src.schemas.news import PromptRequest, NewsSummaryRequestSchema, NewsOut
+from src.schemas.news import PromptRequest, NewsSummaryRequestSchema
 from src.core.config import settings
 from src.services.auth_service import AuthService
 from fastapi.security import OAuth2PasswordBearer
-from datetime import timedelta
 import requests
-from bs4 import BeautifulSoup
 from itertools import count
 import json
 import re
@@ -46,23 +44,23 @@ def read_news(db=Depends(get_db_session)):
 
 @router.get("/user_news")
 def read_user_news(token: str = Depends(oauth2_scheme), db=Depends(get_db_session)):
-    # authenticate token using AuthService (same semantics)
     auth_service = AuthService(db, secret_key=settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
     current_user = auth_service.authenticate_token(token)
 
     repo = NewsRepository(db)
     news = repo.list_all()
     result = []
-    for n in news:
-        upvotes = repo.get_upvote_count(n.id)
-        is_upvoted = repo.user_has_upvoted(n.id, current_user.id)
-        result.append({**article_to_dict(n), "upvotes": upvotes, "is_upvoted": is_upvoted})
+    for tmp_news in news:
+        upvotes = repo.get_upvote_count(tmp_news.id)
+        is_upvoted = repo.user_has_upvoted(tmp_news.id, current_user.id)
+        result.append({**article_to_dict(tmp_news), "upvotes": upvotes, "is_upvoted": is_upvoted})
     return result
 
 @router.post("/search_news")
-def search_news(request: PromptRequest):
+def search_news(request: PromptRequest,db=Depends(get_db_session)):
     prompt = request.prompt
     openai_client = OpenAIService(settings.OPENAI_API_KEY)
+    news_service = NewsService(db, openai_client)
     keyword_extraction_messages = [
         {
             "role": "system",
@@ -72,32 +70,11 @@ def search_news(request: PromptRequest):
     ]
 
     keywords = openai_client.chat(keyword_extraction_messages)
-    news_items = NewsService.fetch_news_info(keywords, is_initial=False)
-    news_list = []
-    for news_item in news_items:
-        try:
-            response = requests.get(news_item["titleLink"], timeout=10)
-            soup = BeautifulSoup(response.text, "html.parser")
-            title = soup.find("h1", class_="article-content__title").text
-            time = soup.find("time", class_="article-content__time").text
-            content_section = soup.find("section", class_="article-content__editor")
+    news_list = news_service.search_and_parse(keywords)
+    for news in news_list:
+        news["id"] = next(ARTICLE_ID_COUNTER)
 
-            paragraphs = [
-                paragraph.text
-                for paragraph in content_section.find_all("p")
-                if paragraph.text.strip() != "" and "▪" not in paragraph.text
-            ]
-            detailed_news = {
-                "url": news_item["titleLink"],
-                "title": title,
-                "time": time,
-                "content": " ".join(paragraphs),
-            }
-            detailed_news["id"] = next(ARTICLE_ID_COUNTER)
-            news_list.append(detailed_news)
-        except Exception as exc:
-            print(exc)
-    return sorted(news_list, key=lambda x: x["time"], reverse=True)
+    return news_list
 
 @router.post("/news_summary")
 def news_summary(payload: NewsSummaryRequestSchema, token: str = Depends(oauth2_scheme), db=Depends(get_db_session)):

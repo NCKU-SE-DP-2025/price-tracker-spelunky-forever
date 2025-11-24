@@ -1,5 +1,11 @@
 import os
 from typing import List
+from dotenv import load_dotenv
+from pathlib import Path
+
+print(Path(__file__).resolve().parents[3]/".env")
+
+load_dotenv(Path(__file__).resolve().parents[3]/".env")
 
 class Settings():
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///news_database.db")
@@ -13,3 +19,9 @@ class Settings():
     CORS_ORIGINS: List[str] = ["http://localhost:8080"]
 
 settings = Settings()
+
+# if not settings.OPENAI_API_KEY:
+#     raise ValueError("嚴重錯誤: 未設定 OPENAI_API_KEY 環境變數！")
+
+# if not settings.JWT_SECRET:
+#     raise ValueError("嚴重錯誤: 未設定 JWT_SECRET 環境變數！")
